@@ -10,46 +10,20 @@
 #include "RandomGraphBuilder.h"
 #include "GraphMatching.h"
 
-static unsigned int threadCount = 0;
-static std::mutex threadCountMutex;
-static std::condition_variable cv;
-static std::atomic<unsigned int> progress;
+
+
 
 enum TypeGraph {
     GENERAL, BIPARTI
 };
 
-void compute(TypeGraph type, unsigned int repeat, float p, unsigned int nbNodes, unsigned int& result) {
-    // We need to start this one only once, since windows has no entropy
-    std::random_device rand;
-    result = 0;
-    for (unsigned int i = 0; i < repeat; i++) {
-        if (type == BIPARTI) {
-            UnDiGraph graph = RandomGraphBuilder::RandomBipartiteGraph(nbNodes, nbNodes, p, rand);
-            if (GraphMatching::IsPerfectMatch(graph, GraphMatching::MaximumBipartite(graph, nbNodes))) {
-                result++;
-            }
-        } else {
-            UnDiGraph graph = RandomGraphBuilder::RandomGraph(nbNodes, p, rand);
-            if (GraphMatching::IsPerfectMatch(graph, GraphMatching::MaximumMatching(graph))) {
-                result++;
-            }
-        }
-        progress++;
-    }
-    { // Critical section
-        std::unique_lock<std::mutex> lk(threadCountMutex);
-        threadCount--;
-        cv.notify_one();
-    }
-}
 
-static bool done;
+
 
 
 int main(int argc, char** argv) {
     // - - - - - Argument parsing
-    if (argc < 4 || argc > 9) {
+    if (argc < 4 || argc > 8) {
         std::cerr << "Invalid amount of parameters." << std::endl
                 << "Usage: " << argv[0] << " Type_of_graph Number_of_nodes step [min max max_thread nb_repeat -p]" << std::endl;
         return 0;
@@ -93,23 +67,13 @@ int main(int argc, char** argv) {
     }
 
 
-    // Try to determine the amount of avaiable threads, or default to 4
-    unsigned int nbThreads = std::thread::hardware_concurrency();
-    if (argc > 6) {
-        nbThreads = std::atoi(argv[6]);
-        if (nbThreads < 0) {
-            std::cerr << "Invalid value for max_thread: " << nbThreads
-                    << ". Expected a positive value." << std::endl;
-            return 1;
-        }
-    }
-    if (nbThreads == 0) nbThreads = 4;
+    
 
-    unsigned int repeat = 100;
-    if (argc > 7) {
-        repeat = std::atoi(argv[7]);
-        if (repeat < 0) {
-            std::cerr << "Invalid value for nb_repeat: " << repeat
+    unsigned int repetition = 100;
+    if (argc > 6) {
+        repetition = std::atoi(argv[6]);
+        if (repetition < 0) {
+            std::cerr << "Invalid value for nb_repeat: " << repetition
                     << ". Expected a positive value." << std::endl;
             return 1;
         }
@@ -122,16 +86,36 @@ int main(int argc, char** argv) {
 
     for (unsigned int i = 0; (i + 1) * step + min <= max; i++) {
         results[i].first = (i + 1) * step + min;
-        compute(type, repeat, results[i].first, nbNodes, std::ref(results[i].second));
+  
+        float proba = results[i].first;
+        std::random_device rand;
+    	unsigned int& result = std::ref(results[i].second);
+    	result= 0;
+	    for (unsigned int i = 0; i < repetition; i++) {
+	        if (type == BIPARTI) {
+	            UnDiGraph graph = RandomGraphBuilder::RandomBipartiteGraph(nbNodes, nbNodes,proba, rand);
+	            if (GraphMatching::CouplageParfait(graph, GraphMatching::CouplageMaximumBiparti(graph, nbNodes))) {
+	                result++;
+	            }
+	        } else {
+	            UnDiGraph graph = RandomGraphBuilder::RandomGraph(nbNodes,proba, rand);
+	            if (GraphMatching::IsPerfectMatch(graph, GraphMatching::MaximumMatching(graph))) {
+	                result++;
+	            }
+	        }
+	       
+	    }
+	    
+	
     }
 
 
     std::cout << " ################ Résultats ###############" << std::endl;
     std::cout <<"Nombre de nodes : " << nbNodes << std::endl;
-    std::cout << "Nombre de répétitions : "<< repeat << ", Pas :" << step << ", min : " << min << ", max :" << max << std::endl;
+    std::cout << "Nombre de répétitions : "<< repetition << ", Pas :" << step << ", min : " << min << ", max :" << max << std::endl;
 
     for (std::pair<float, unsigned int> i : results) {
-        std::cout << i.first << "," << i.second << "," << ((float) i.second / repeat) << std::endl;
+        std::cout << i.first << "," << i.second << "," << ((float) i.second / repetition) << std::endl;
     }
 
     return 0;
