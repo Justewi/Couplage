@@ -37,9 +37,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    unsigned int nombre_de_noeu = std::atoi(argv[2]);
-    if (nombre_de_noeu <= 0) {
-        std::cerr << "le nombre de noeud ne peut pas etre négatif: " << nombre_de_noeu << std::endl;
+    unsigned int nombre_de_noeuds = std::atoi(argv[2]);
+    if (nombre_de_noeuds <= 0) {
+        std::cerr << "le nombre de noeud ne peut pas etre négatif: " << nombre_de_noeuds << std::endl;
         return 1;
     }
 
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
             return 1;
         }
     }
-    
+
     unsigned int repetition = 100;
     if (argc > 6) {
         repetition = std::atoi(argv[6]);
@@ -91,12 +91,12 @@ int main(int argc, char** argv) {
     	result= 0;
 	    for (unsigned int i = 0; i < repetition; i++) {
 	        if (type_de_graph == BIPARTI) {
-	            UnDiGraph graph = RandomGraphBuilder::RandomBipartiteGraph(nombre_de_noeu, nombre_de_noeu,proba, rand);
-	            if (GraphMatching::CouplageParfait(graph, GraphMatching::CouplageMaximumBiparti(graph, nombre_de_noeu))) {
+	            UnDiGraph graph = RandomGraphBuilder::RandomBipartiteGraph(nombre_de_noeuds, nombre_de_noeuds,proba, rand);
+	            if (GraphMatching::CouplageParfait(graph, GraphMatching::CouplageMaximumBiparti(graph, nombre_de_noeuds))) {
 	                result++;
 	            }
 	        } else {
-	            UnDiGraph graph = RandomGraphBuilder::RandomGraph(nombre_de_noeu,proba, rand);
+	            UnDiGraph graph = RandomGraphBuilder::RandomGraph(nombre_de_noeuds,proba, rand);
 	            if (GraphMatching::CouplageParfait(graph, GraphMatching::CouplageMaximumGeneral(graph))) {
 	                result++;
 	            }
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 
 
     std::cout << " ################ Résultats ###############" << std::endl;
-    std::cout <<"Nombre de nodes : " << nombre_de_noeu << std::endl;
+    std::cout <<"Nombre de nodes : " << nombre_de_noeuds << std::endl;
     std::cout << "Nombre de répétitions : "<< repetition << ", Pas :" << pas << ", min : " << min << ", max :" << max << std::endl;
 
     for (std::pair<float, unsigned int> i : results) {
