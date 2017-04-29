@@ -9,34 +9,50 @@
 #include "UnDiGraph.h"
 
 static int lca(std::vector<int>& match, std::vector<int>& base, std::vector<int>& p, int a, int b) {
+    //std::cout << "in lca" << '\n';
     std::vector<bool> used(match.size());
     while (true) {
+        //std::cout << "firts while" << '\n';
         a = base[a];
         used[a] = true;
-        if (match[a] == -1) break;
+        if (match[a] == -1) {
+            break;
+        }
         a = p[match[a]];
     }
     while (true) {
+        //std::cout << "second while" << '\n';
         b = base[b];
-        if (used[b]) return b;
+        if (used[b]) {
+            return b;
+        }
         b = p[match[b]];
     }
 }
 
 static void markPath(std::vector<int>& match, std::vector<int>& base, std::vector<bool>& blossom, std::vector<int>& p, int v, int b, int children) {
-    for (; base[v] != b; v = p[match[v]]) {
+    //std::cout << "in markPath" << '\n';
+    while (base[v] != b) {
+        //for (; base[v] != b; v = p[match[v]]) {
         blossom[base[v]] = blossom[base[match[v]]] = true;
         p[v] = children;
         children = match[v];
+        v = p[match[v]];
     }
 }
 
 static int findPath(const UnDiGraph& graph, std::vector<int>& match, std::vector<int>& p, int root) {
+    //std::cout << "in find path" << '\n';
     int n = graph.nbVertices();
     std::vector<bool> used(n);
     std::vector<int> base(n);
-    for (int i = 0; i < n; ++i)
+    //std::vector<int> p(n, -1);
+    for (int i = 0; i < n; ++i) {
         base[i] = i;
+    }
+    for (int i = 0; i < n; i++) {
+        p[i] = -1;
+    }
 
     used[root] = true;
     int qh = 0;
@@ -53,7 +69,7 @@ static int findPath(const UnDiGraph& graph, std::vector<int>& match, std::vector
                 std::vector<bool> blossom(n);
                 markPath(match, base, blossom, p, v, curbase, to);
                 markPath(match, base, blossom, p, to, curbase, v);
-                for (int i = 0; i < n; ++i)
+                for (int i = 0; i < n; i++) {
                     if (blossom[base[i]]) {
                         base[i] = curbase;
                         if (!used[i]) {
@@ -61,10 +77,12 @@ static int findPath(const UnDiGraph& graph, std::vector<int>& match, std::vector
                             q[qt++] = i;
                         }
                     }
+                }
             } else if (p[to] == -1) {
                 p[to] = v;
-                if (match[to] == -1)
+                if (match[to] == -1) {
                     return to;
+                }
                 to = match[to];
                 used[to] = true;
                 q[qt++] = to;
@@ -75,20 +93,34 @@ static int findPath(const UnDiGraph& graph, std::vector<int>& match, std::vector
 }
 
 std::vector<Edge> GraphMatching::MaximumMatching(const UnDiGraph& g) {
+    //std::cout << "in max matching" << '\n';
     int n = g.nbVertices();
     std::vector<int> match(n, -1);
     std::unordered_set<Edge, Edge::Hash> matchedEdges;
-    std::vector<int> p(n, -1);
+    //std::vector<int> p(n, -1);
+    std::vector<int> p(n);
     for (int i = 0; i < n; ++i) {
         if (match[i] == -1) {
             int v = findPath(g, match, p, i);
             while (v != -1) {
                 int pv = p[v];
                 int ppv = match[pv];
+                if (match[v] != -1) {
+                    if (v < match[v])
+                        matchedEdges.erase(Edge(v, match[v]));
+                    else
+                        matchedEdges.erase(Edge(match[v], v));
+                }
+                if (match[pv] != -1) {
+                    if (pv < match[pv])
+                        matchedEdges.erase(Edge(pv, match[pv]));
+                    else
+                        matchedEdges.erase(Edge(match[pv], pv));
+                }
                 match[v] = pv;
                 match[pv] = v;
-                v = ppv;
                 matchedEdges.insert(Edge(pv, v));
+                v = ppv;
             }
         }
     }

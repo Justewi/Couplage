@@ -10,7 +10,7 @@
 #ifndef SRC_EDGE_H_
 #define SRC_EDGE_H_
 
-#include <cstddef>
+#include <iostream>
 
 class Edge {
 private:
@@ -38,6 +38,12 @@ public:
     };
 
     virtual ~Edge();
+
+    friend std::ostream& operator<<(std::ostream& os, const Edge& obj) {
+        os << "(" << obj.origin() << "," << obj.destination() << ")";
+        return os;
+    }
+
 };
 
 #endif /* SRC_EDGE_H_ */

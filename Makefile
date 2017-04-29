@@ -20,7 +20,7 @@ test: $(TEST_OBJS) $(OBJS)
 
 # compile and generate dependency info
 %.o: %.c
-	$(CXX) -c $(CPPFLAGS) $*.c -o $*.o
+	$(CXX) -c $(CPPFLAGS) $*.c -o $*.o $(CXXFLAGS)
 	$(CXX) -MM $(CPPFLAGS) $*.c > $*.d
 
 # remove compilation products
