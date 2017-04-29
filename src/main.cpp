@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    TypeGraph type_de_graph;
+    TypeDeGraph type_de_graph;
     if ((std::strcmp(argv[1], "g") == 0) || (std::strcmp(argv[1], "general") == 0)) {
         type_de_graph = TypeDeGraph::GENERAL;
     } else if ((std::strcmp(argv[1], "b") == 0) || (std::strcmp(argv[1], "biparti") == 0)) {
