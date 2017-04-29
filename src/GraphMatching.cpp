@@ -30,8 +30,8 @@ static int lca(std::vector<int>& match, std::vector<int>& base, std::vector<int>
     }
 }
 
-static void markPath(std::vector<int>& match, std::vector<int>& base, std::vector<bool>& blossom, std::vector<int>& p, int v, int b, int children) {
-    //std::cout << "in markPath" << '\n';
+static void markchemin(std::vector<int>& match, std::vector<int>& base, std::vector<bool>& blossom, std::vector<int>& p, int v, int b, int children) {
+    //std::cout << "in markchemin" << '\n';
     while (base[v] != b) {
         //for (; base[v] != b; v = p[match[v]]) {
         blossom[base[v]] = blossom[base[match[v]]] = true;
@@ -41,8 +41,8 @@ static void markPath(std::vector<int>& match, std::vector<int>& base, std::vecto
     }
 }
 
-static int findPath(const UnDiGraph& graph, std::vector<int>& match, std::vector<int>& p, int root) {
-    //std::cout << "in find path" << '\n';
+static int findchemin(const UnDiGraph& graph, std::vector<int>& match, std::vector<int>& p, int root) {
+    //std::cout << "in find chemin" << '\n';
     int n = graph.nbVertices();
     std::vector<bool> used(n);
     std::vector<int> base(n);
@@ -67,8 +67,8 @@ static int findPath(const UnDiGraph& graph, std::vector<int>& match, std::vector
             if (to == root || (match[to] != -1 && p[match[to]] != -1)) {
                 int curbase = lca(match, base, p, v, to);
                 std::vector<bool> blossom(n);
-                markPath(match, base, blossom, p, v, curbase, to);
-                markPath(match, base, blossom, p, to, curbase, v);
+                markchemin(match, base, blossom, p, v, curbase, to);
+                markchemin(match, base, blossom, p, to, curbase, v);
                 for (int i = 0; i < n; i++) {
                     if (blossom[base[i]]) {
                         base[i] = curbase;
@@ -92,190 +92,193 @@ static int findPath(const UnDiGraph& graph, std::vector<int>& match, std::vector
     return -1;
 }
 
-std::vector<Edge> GraphMatching::MaximumMatching(const UnDiGraph& g) {
+std::vector<Edge> GraphMatching::CouplageMaximumGeneral(const UnDiGraph& graphe) {
     //std::cout << "in max matching" << '\n';
-    int n = g.nbVertices();
+    int n = graphe.nbVertices();
     std::vector<int> match(n, -1);
-    std::unordered_set<Edge, Edge::Hash> matchedEdges;
+    std::unordered_set<Edge, Edge::Hash> arretesCouplees;
     //std::vector<int> p(n, -1);
     std::vector<int> p(n);
     for (int i = 0; i < n; ++i) {
         if (match[i] == -1) {
-            int v = findPath(g, match, p, i);
+            int v = findchemin(graphe, match, p, i);
             while (v != -1) {
                 int pv = p[v];
                 int ppv = match[pv];
                 if (match[v] != -1) {
                     if (v < match[v])
-                        matchedEdges.erase(Edge(v, match[v]));
+                        arretesCouplees.erase(Edge(v, match[v]));
                     else
-                        matchedEdges.erase(Edge(match[v], v));
+                        arretesCouplees.erase(Edge(match[v], v));
                 }
                 if (match[pv] != -1) {
                     if (pv < match[pv])
-                        matchedEdges.erase(Edge(pv, match[pv]));
+                        arretesCouplees.erase(Edge(pv, match[pv]));
                     else
-                        matchedEdges.erase(Edge(match[pv], pv));
+                        arretesCouplees.erase(Edge(match[pv], pv));
                 }
                 match[v] = pv;
                 match[pv] = v;
-                matchedEdges.insert(Edge(pv, v));
+                arretesCouplees.insert(Edge(pv, v));
                 v = ppv;
             }
         }
     }
 
-    return std::vector<Edge>(matchedEdges.begin(), matchedEdges.end());
+    return std::vector<Edge>(arretesCouplees.begin(), arretesCouplees.end());
 }
 
 /**
  * Does a Breadth First Search in the given graph, adapted for the Hopcroft-Karp
- * algorithm. This function ensure that the returned nodes are all from the same
- * level, and that the path found to reach them alternate between matched and
+ * algorithm. This function ensure that the returned nodes are all source the same
+ * level, and that the chemin found to reach them alternate between matched and
  * unmatched edges.
  * @param g The bipartite graph
  * @param matched The list of all the nodes, filled with true if the node is already matched
- * @param median The amount of nodes in the left side of the graph
- * @param matchedEdges The set of already matched edges
+ * @param moitie The amount of nodes in the gauche side of the graph
+ * @param arretesCouplees The set of already matched edges
  * @return A set of nodes, all at the same distance of the starting vertexes
  */
-static std::set<unsigned int> BFS(const UnDiGraph& g,
+static std::set<unsigned int> ParcoursEnLargeur(const UnDiGraph& graphe,
         const std::vector<bool>& matched,
-        unsigned int median,
-        const std::unordered_set<Edge, Edge::Hash>& matchedEdges) {
+        unsigned int moitie,
+        const std::unordered_set<Edge, Edge::Hash>& arretesCouplees) {
+    std::set<unsigned int>  defaut =  std::set<unsigned int>();
     std::queue<unsigned int> queue;
-    std::vector<bool> visited(g.nbVertices(), false);
+    std::vector<bool> visited(graphe.nbVertices(), false);
 
     // Put the source nodes in the queue and mark them as visited
-    for (unsigned int i = 0; i < median; i++) {
+    for (unsigned int i = 0; i < moitie; i++) {
         if (!matched[i]) {
             queue.push(i);
             visited[i] = true;
         }
     }
-    unsigned int left = queue.size();
-    bool hasFoundUnmatched = false;
+    unsigned int restant = queue.size();
+    bool soloFound = false;
     while (!queue.empty()) {
-        unsigned int current = queue.front();
+        unsigned int noeudActuel = queue.front();
         queue.pop();
 
-        for (unsigned int i : g.adjacents(current)) {
-            if (!visited[i]
-                    && ((current < median && matchedEdges.find(Edge(current, i)) == matchedEdges.end())
-                    || (current >= median && matchedEdges.find(Edge(i, current)) != matchedEdges.end()))) {
+        for (unsigned int i : graphe.adjacents(noeudActuel)) {
+            if (!visited[i] && ((noeudActuel < moitie && arretesCouplees.find(Edge(noeudActuel, i)) == arretesCouplees.end()) || (noeudActuel >= moitie && arretesCouplees.find(Edge(i, noeudActuel)) != arretesCouplees.end()))) {
                 queue.push(i);
-                if (!matched[i])
-                    hasFoundUnmatched = true;
+                if (!matched[i]){
+                    soloFound = true;
+                }
             }
         }
-        visited[current] = true;
+        visited[noeudActuel] = true;
 
-        // Early stop when finding a stage where there is an unmatched vertex
-        if (--left == 0) {
-            if (hasFoundUnmatched) {
-                std::set<unsigned int> v;
+
+        if (--restant == 0) {
+            if (soloFound) {
+                std::set<unsigned int> vertex;
                 while (!queue.empty()) {
-                    v.insert(queue.front());
+                    vertex.insert(queue.front());
                     queue.pop();
                 }
-                return v;
+                return vertex;
             }
-            left = queue.size();
-            hasFoundUnmatched = false;
+            restant = queue.size();
+            soloFound = false;
         }
     }
-    return std::set<unsigned int>();
+    return defaut;
 }
 
 /**
  * Does the actual work of the Depth First Search, adapted for Hopcroft-Karp
- * algorithm. See DFS().
+ * algorithm. See ParcoursEnProfondeur().
  */
-static std::vector<unsigned int> DFS_(const UnDiGraph& g,
-        const std::vector<bool>& matched, unsigned int median,
-        const std::unordered_set<Edge, Edge::Hash>& matchedEdges,
-        unsigned int from, std::vector<bool>& visited) {
-    visited[from] = true;
 
-    for (unsigned int i : g.adjacents(from)) {
-        if (!visited[i]
-                && ((from < median && matchedEdges.find(Edge(from, i)) != matchedEdges.end())
-                || (from >= median && matchedEdges.find(Edge(i, from)) == matchedEdges.end()))) {
-            if (!matched[i] && i < median)
-                return std::vector<unsigned int>(1, i);
-            std::vector<unsigned int> tmp = DFS_(g, matched, median, matchedEdges, i, visited);
-            if (!tmp.empty()) {
-                tmp.push_back(i);
-                return tmp;
+static std::vector<unsigned int> ParcoursEnProfondeur_(const UnDiGraph& graphe,
+        const std::vector<bool>& matched, unsigned int moitie,
+        const std::unordered_set<Edge, Edge::Hash>& arretesCouplees,
+        unsigned int source, std::vector<bool>& visited) {
+        std::vector<unsigned int> vide = std::vector<unsigned int>();
+        visited[source] = true;
+        for (unsigned int i : graphe.adjacents(source)) {
+            if (!visited[i] && ((source >= moitie && arretesCouplees.find(Edge(i, source)) == arretesCouplees.end()) || (source < moitie && arretesCouplees.find(Edge(source, i)) != arretesCouplees.end()))) {
+                if (i < moitie && !matched[i]){
+                    return std::vector<unsigned int>(1, i);
+                }
+                std::vector<unsigned int> test = ParcoursEnProfondeur_(graphe, matched, moitie, arretesCouplees, i, visited);
+                if (!test.empty()) {
+                    test.push_back(i);
+                    return test;
+                }
             }
         }
-    }
-    return std::vector<unsigned int>();
+
+    return vide;
 }
 
 /**
  * Does a Depth First Search in the given graph, adapted for Hopcroft-Karp
- * algorithm. This function ensure that the returned path will alternate between
+ * algorithm. This function ensure that the returned chemin will alternate between
  * a matched edge and a non-matched one.
  * @param g The bipartite graph
- * @param matched A list of size corresponding to the amount of vertex in g,
+ * @param matched A list of size corresponding to the amount of vertex in graphe,
  *  with true for the already matched vertexes
- * @param median The amount of nodes in the left side of the graph
- * @param matchedEdges The list of already matched edges
- * @param from The node to start the search from
- * @return The path from the node to a free one (on the other side), or an empty set.
+ * @param moitie The amount of nodes in the gauche side of the graph
+ * @param arretesCouplees The list of already matched edges
+ * @param source The node to start the search from
+ * @return The chemin source the node to a free one (on the other side), or an empty set.
  */
-static std::vector<unsigned int> DFS(const UnDiGraph& g, const std::vector<bool>& matched, unsigned int median, const std::unordered_set<Edge, Edge::Hash>& matchedEdges, unsigned int from) {
-    std::vector<bool> visited(g.nbVertices(), false);
-    std::vector<unsigned int> path = DFS_(g, matched, median, matchedEdges, from, visited);
-    if (!path.empty())
-        path.push_back(from);
-    return path;
+static std::vector<unsigned int> ParcoursEnProfondeur(const UnDiGraph& graphe, const std::vector<bool>& matched, unsigned int moitie, const std::unordered_set<Edge, Edge::Hash>& arretesCouplees, unsigned int source) {
+    std::vector<bool> visited(graphe.nbVertices(), false);
+
+    std::vector<unsigned int> chemin = ParcoursEnProfondeur_(graphe, matched, moitie, arretesCouplees, source, visited); ;
+    if (!chemin.empty())
+        chemin.push_back(source);
+
+    return chemin;
 }
 
-std::vector<Edge> GraphMatching::MaximumBipartite(const UnDiGraph& g, unsigned int median) {
-    std::vector<bool> matched(g.nbVertices(), false);
-    std::unordered_set<Edge, Edge::Hash> matchedEdges;
-    std::set<unsigned int> bfsResult = BFS(g, matched, median, matchedEdges);
-    while (!bfsResult.empty()) {
-        // We can match those nodes, so do it
-        for (unsigned int i : bfsResult) {
-            // Find a path from i to a left node
-            std::vector<unsigned int> path = DFS(g, matched, median, matchedEdges, i);
-            // Reverse the matched edges in the path
+std::vector<Edge> GraphMatching::CouplageMaximumBiparti(const UnDiGraph& graphe, unsigned int moitie) {
+    std::unordered_set<Edge, Edge::Hash> arretesCouplees;
+    std::vector<bool> matched(graphe.nbVertices(), false);
+    std::set<unsigned int> bfsResultSet = ParcoursEnLargeur(graphe, matched, moitie, arretesCouplees);
+    while (!bfsResultSet.empty()) {
+        for (unsigned int i : bfsResultSet) {
+            // Trouve un chemin en utilisant l'algorithme de parcours en profondeur
+            std::vector<unsigned int> chemin = ParcoursEnProfondeur(graphe, matched, moitie, arretesCouplees, i);
+            // Reverse the matched edges in the chemin
             bool step = false;
-            if (!path.empty())// Otherwise, with unsigned int, 0-1 is too big
-                for (unsigned int j = 0; j < path.size() - 1; j++) {
-                    unsigned int left = path[j];
-                    unsigned int right = path[j + 1];
-                    if (left > right) std::swap(left, right);
+            if (!chemin.empty())// Otherwise, with unsigned int, 0-1 is too big
+                for (unsigned int j = 0; j < chemin.size() - 1; j++) {
+                    unsigned int gauche = chemin[j];
+                    unsigned int droite = chemin[j + 1];
+                    if (gauche > droite) std::swap(gauche, droite);
 
-                    if (step) matchedEdges.erase(Edge(left, right));
-                    else matchedEdges.insert(Edge(left, right));
-                    matched[left] = true;
-                    matched[right] = true;
+                    if (step) arretesCouplees.erase(Edge(gauche, droite));
+                    else arretesCouplees.insert(Edge(gauche, droite));
                     step = !step;
+                    matched[gauche] = true;
+                    matched[droite] = true;
+
                 }
         }
-        bfsResult = BFS(g, matched, median, matchedEdges);
+        bfsResultSet = ParcoursEnLargeur(graphe, matched, moitie, arretesCouplees);
     }
-    return std::vector<Edge>(matchedEdges.begin(), matchedEdges.end());
+    return std::vector<Edge>(arretesCouplees.begin(), arretesCouplees.end());
 }
 
 /**
  * Since a vertex can't be connected to two matched edges, there should be all
  * vertices exactly once, this means half as much edges.
  */
-bool GraphMatching::IsPerfectMatch(const UnDiGraph& g, const std::vector<Edge>& match) {
-    if (match.size() != g.nbVertices() / 2)
+bool GraphMatching::CouplageParfait(const UnDiGraph& graphe, const std::vector<Edge>& couplages) {
+    if (couplages.size() != graphe.nbVertices() / 2)
         return false;
-    std::set<unsigned int> nodes;
-    for (Edge e : match) {
-        if (nodes.find(e.origin()) != nodes.end()
-                || nodes.find(e.destination()) != nodes.end())
+    std::set<unsigned int> noeuds;
+    for (Edge e : couplages) {
+        if (noeuds.find(e.origin()) != noeuds.end() || noeuds.find(e.destination()) != noeuds.end()){
             return false;
-        nodes.insert(e.origin());
-        nodes.insert(e.destination());
+        }
+        noeuds.insert(e.origin());
+        noeuds.insert(e.destination());
     }
     return true;
 }

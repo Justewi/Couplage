@@ -19,8 +19,6 @@ enum TypeGraph {
 
 
 
-
-
 int main(int argc, char** argv) {
     // - - - - - Argument parsing
     if (argc < 4 || argc > 8) {
