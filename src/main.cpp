@@ -26,12 +26,12 @@ void compute(TypeGraph type, unsigned int repeat, float p, unsigned int nbNodes,
     for (unsigned int i = 0; i < repeat; i++) {
         if (type == BIPARTI) {
             UnDiGraph graph = RandomGraphBuilder::RandomBipartiteGraph(nbNodes, nbNodes, p, rand);
-            if (GraphMatching::IsPerfectMatch(graph, GraphMatching::MaximumBipartite(graph, nbNodes))) {
+            if (GraphMatching::CouplageParfait(graph, GraphMatching::CouplageMaximumBiparti(graph, nbNodes))) {
                 result++;
             }
         } else {
             UnDiGraph graph = RandomGraphBuilder::RandomGraph(nbNodes, p, rand);
-            if (GraphMatching::IsPerfectMatch(graph, GraphMatching::MaximumMatching(graph))) {
+            if (GraphMatching::CouplageParfait(graph, GraphMatching:: CouplageMaximumGeneral(graph))) {
                 result++;
             }
         }
