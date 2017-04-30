@@ -6,7 +6,84 @@
 #include "GraphMatching.h"
 #include "UnDiGraph.h"
 
+static std::vector<int> ParcoursEnProfondeur(const UnDiGraph& graphe, const std::vector<bool>& matched, int moitie, const std::unordered_set<Edge, Edge::Hash>& arretesCouplees, int source, std::vector<bool>& visited);
+static std::set<int> ParcoursEnLargeur(const UnDiGraph& graphe, const std::vector<bool>& matched,  int moitie, const std::unordered_set<Edge, Edge::Hash>& arretesCouplees);
 
+std::vector<Edge> CouplageMaximumGeneral(const UnDiGraph& graphe){
+
+}
+
+/**
+*
+* Algo de Hopcroft-Karp
+* suis l'algo à cette adresse :
+* https://en.wikipedia.org/wiki/Hopcroft-Karp_algorithm
+* Complexité : O(nombre de noeuds)
+**/
+std::vector<Edge> GraphMatching::CouplageMaximumBiparti(const UnDiGraph& graphe, int moitie) {
+    std::unordered_set<Edge, Edge::Hash> arretesCouplees;
+    std::vector<bool> matched(graphe.nbVertices(), false);
+    //Parcours en largeur
+    std::set<int> bfsResultSet = ParcoursEnLargeur(graphe, matched, moitie, arretesCouplees);
+    while (!bfsResultSet.empty()) {
+        for (int i : bfsResultSet) {
+            // Trouve un chemin en utilisant l'algorithme de parcours en profondeur
+
+            std::vector<bool> visited(graphe.nbVertices(), false);
+
+            std::vector<int> chemin = ParcoursEnProfondeur(graphe, matched, moitie, arretesCouplees, i, visited);
+
+            if (!chemin.empty()){
+                chemin.push_back(i);
+            }
+
+
+            bool step = false;
+            if (!chemin.empty()){
+                for (int j = 0; j < chemin.size() - 1; j++) {
+
+                    int droite = chemin.at(j + 1);
+                    int gauche = chemin.at(j);
+                    if (gauche > droite){
+                      std::swap(gauche, droite);
+                    }
+                    if (step){
+                      arretesCouplees.erase(Edge(gauche, droite));
+                    }
+                    else{
+                      arretesCouplees.insert(Edge(gauche, droite));
+                    }
+                    step = !step;
+                    matched.at(gauche) = true;
+                    matched.at(droite) = true;
+
+                }
+              }
+        }
+        bfsResultSet = ParcoursEnLargeur(graphe, matched, moitie, arretesCouplees);
+    }
+    return std::vector<Edge>(arretesCouplees.begin(), arretesCouplees.end());
+}
+
+/**
+ * Test si le couplage est parfait .
+ */
+bool GraphMatching::CouplageParfait(const UnDiGraph& graphe, const std::vector<Edge>& couplages) {
+    //Si on a plus de couplage que le nombre de noeuds/2 : false
+    if (couplages.size() != graphe.nbVertices() / 2)
+        return false;
+    std::set<int> noeuds;
+    for (Edge e : couplages) {
+       // Si un des noeuds est déjà couplé : false
+        if (noeuds.find(e.origin()) != noeuds.end() || noeuds.find(e.destination()) != noeuds.end()){
+            return false;
+        }
+        noeuds.insert(e.origin());
+        noeuds.insert(e.destination());
+    }
+    //Le graphe est parfait si on arrive ici
+    return true;
+}
 
 /**
  * Parcours en largeur
@@ -15,10 +92,10 @@
  */
 static std::set<int> ParcoursEnLargeur(const UnDiGraph& graphe, const std::vector<bool>& matched,  int moitie, const std::unordered_set<Edge, Edge::Hash>& arretesCouplees) {
     std::set<int>  defaut =  std::set<int>();
-    std::queue<int> queue;
+
     std::vector<bool> visited(graphe.nbVertices(), false);
 
-
+    std::queue<int> queue;
     for (int i = 0; i < moitie; i++) {
         if (!matched[i]) {
             queue.push(i);
@@ -39,8 +116,7 @@ static std::set<int> ParcoursEnLargeur(const UnDiGraph& graphe, const std::vecto
             }
         }
         visited[noeudActuel] = true;
-
-
+        
         if (--restant == 0) {
             if (soloFound) {
                 std::set<int> vertex;
@@ -80,78 +156,4 @@ static std::vector<int> ParcoursEnProfondeur(const UnDiGraph& graphe, const std:
         }
 
     return vide;
-}
-
-
-
-
-/**
-*
-* Algo de Hopcroft-Karp
-* suis l'algo à cette adresse :
-* https://en.wikipedia.org/wiki/Hopcroft-Karp_algorithm
-* Complexité : O(nombre de noeuds)
-**/
-std::vector<Edge> GraphMatching::CouplageMaximumBiparti(const UnDiGraph& graphe, int moitie) {
-    std::unordered_set<Edge, Edge::Hash> arretesCouplees;
-    std::vector<bool> matched(graphe.nbVertices(), false);
-    //Parcours en largeur
-    std::set<int> bfsResultSet = ParcoursEnLargeur(graphe, matched, moitie, arretesCouplees);
-    while (!bfsResultSet.empty()) {
-        for (int i : bfsResultSet) {
-            // Trouve un chemin en utilisant l'algorithme de parcours en profondeur
-
-            std::vector<bool> visited(graphe.nbVertices(), false);
-
-            std::vector<int> chemin = ParcoursEnProfondeur(graphe, matched, moitie, arretesCouplees, i, visited); ;
-
-            if (!chemin.empty())
-                chemin.push_back(i);
-
-
-
-            bool step = false;
-            if (!chemin.empty())
-                for (int j = 0; j < chemin.size() - 1; j++) {
-
-                    int droite = chemin.at(j + 1);
-                    int gauche = chemin.at(j);
-                    if (gauche > droite){
-                      std::swap(gauche, droite);
-                    }
-                    if (step){
-                      arretesCouplees.erase(Edge(gauche, droite));
-                    }
-                    else{
-                      arretesCouplees.insert(Edge(gauche, droite));
-                    }
-                    step = !step;
-                    matched.at(gauche) = true;
-                    matched.at(droite) = true;
-
-                }
-        }
-        bfsResultSet = ParcoursEnLargeur(graphe, matched, moitie, arretesCouplees);
-    }
-    return std::vector<Edge>(arretesCouplees.begin(), arretesCouplees.end());
-}
-
-/**
- * Test si le couplage est parfait .
- */
-bool GraphMatching::CouplageParfait(const UnDiGraph& graphe, const std::vector<Edge>& couplages) {
-    //Si on a plus de couplage que le nombre de noeuds/2 : false
-    if (couplages.size() != graphe.nbVertices() / 2)
-        return false;
-    std::set<int> noeuds;
-    for (Edge e : couplages) {
-       // Si un des noeuds est déjà couplé : false
-        if (noeuds.find(e.origin()) != noeuds.end() || noeuds.find(e.destination()) != noeuds.end()){
-            return false;
-        }
-        noeuds.insert(e.origin());
-        noeuds.insert(e.destination());
-    }
-    //Le graphe est parfait si on arrive ici
-    return true;
 }
