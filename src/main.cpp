@@ -1,22 +1,54 @@
 #include <iostream>
 #include <cstdlib>
 #include <random>
-#include <thread>
-#include <atomic>
 #include <condition_variable>
 #include <cstring>
-#include <iomanip>
 
-#include "RandomGraphBuilder.h"
 #include "GraphMatching.h"
-
-
-
 
 enum TypeDeGraph {
     GENERAL, BIPARTI
 };
 
+
+UnDiGraph GenerateGrapheBiparti(int n1, int n2, float p){
+
+    std::mt19937 rng;
+    std::bernoulli_distribution dist(p);
+
+
+    std::random_device rand;
+    rng.seed(rand());
+
+
+    UnDiGraph graphe(n1 + n2);
+
+    //On ne met un lien qu'entre deux noeuds de parties opposés
+    for (int gauche = 0; gauche < n1; gauche++){
+        for (int droite = n1; droite < n1 + n2; droite++){
+            if (dist(rng)){
+                graphe.addEdge(gauche, droite);
+            }
+        }
+    }
+    return graphe;
+}
+
+UnDiGraph GenerateGeneralGraphe(int n, float p){
+    std::mt19937 rng;
+    rng.seed(std::random_device()());
+    UnDiGraph graphe(n);
+
+    std::bernoulli_distribution dist(p);
+    for (int e1 = 0; e1 < n; e1++){
+        for (int e2 = e1; e2 < n; e2++){
+            if (dist(rng)){
+                graphe.addEdge(e1, e2);
+            }
+        }
+    }
+    return graphe;
+}
 
 
 int main(int argc, char** argv) {
@@ -37,7 +69,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    unsigned int nombre_de_noeuds = std::atoi(argv[2]);
+    int nombre_de_noeuds = std::atoi(argv[2]);
     if (nombre_de_noeuds <= 0) {
         std::cerr << "le nombre de noeud ne peut pas etre négatif: " << nombre_de_noeuds << std::endl;
         return 1;
@@ -45,7 +77,7 @@ int main(int argc, char** argv) {
 
     float pas = std::atof(argv[3]);
     if (pas <= 0 || pas > 1) {
-        std::cerr << "Valeur invalide pour le nombre d'étapes : " << pas << ". doit etre comprise entre 0 et 1." << std::endl;
+        std::cerr << "Valeur invalide pour le pas : " << pas << ". doit etre comprise entre 0 et 1." << std::endl;
         return 1;
     }
 
@@ -67,7 +99,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    unsigned int repetition = 100;
+    int repetition = 100;
     if (argc > 6) {
         repetition = std::atoi(argv[6]);
         if (repetition < 0) {
@@ -80,31 +112,30 @@ int main(int argc, char** argv) {
 
 
     // - - - - - Actual work
-    std::vector<std::pair<float, unsigned int>> results ( (max - min) / pas, std::pair<float, unsigned int>(0, 0));
+    std::vector<std::pair<float, int>> results ( (max - min) / pas, std::pair<float, int>(0, 0));
 
-    for (unsigned int i = 0; (i + 1) * pas + min <= max; i++) {
+    for (int i = 0; (i + 1) * pas + min <= max; i++) {
         results[i].first = (i + 1) * pas + min;
-  
-        float proba = results[i].first;
-        std::random_device rand;
-    	unsigned int& result = std::ref(results[i].second);
+
+      float proba = results[i].first;
+    	int& result = std::ref(results[i].second);
     	result= 0;
-	    for (unsigned int i = 0; i < repetition; i++) {
+	    for (int i = 0; i < repetition; i++) {
 	        if (type_de_graph == BIPARTI) {
-	            UnDiGraph graph = RandomGraphBuilder::RandomBipartiteGraph(nombre_de_noeuds, nombre_de_noeuds,proba, rand);
+	            UnDiGraph graph = GenerateGrapheBiparti(nombre_de_noeuds, nombre_de_noeuds,proba);
 	            if (GraphMatching::CouplageParfait(graph, GraphMatching::CouplageMaximumBiparti(graph, nombre_de_noeuds))) {
 	                result++;
 	            }
 	        } else {
-	            UnDiGraph graph = RandomGraphBuilder::RandomGraph(nombre_de_noeuds,proba, rand);
-	            if (GraphMatching::CouplageParfait(graph, GraphMatching::CouplageMaximumGeneral(graph))) {
+	            UnDiGraph graph = GenerateGeneralGraphe(nombre_de_noeuds,proba);
+	           /* if (GraphMatching::CouplageParfait(graph, GraphMatching::CouplageMaximumGeneral(graph))) {
 	                result++;
-	            }
+	            }*/
 	        }
-	       
+
 	    }
-	    
-	
+
+
     }
 
 
@@ -112,7 +143,7 @@ int main(int argc, char** argv) {
     std::cout <<"Nombre de nodes : " << nombre_de_noeuds << std::endl;
     std::cout << "Nombre de répétitions : "<< repetition << ", Pas :" << pas << ", min : " << min << ", max :" << max << std::endl;
 
-    for (std::pair<float, unsigned int> i : results) {
+    for (std::pair<float, int> i : results) {
         std::cout << i.first << "," << i.second << "," << ((float) i.second / repetition) << std::endl;
     }
 

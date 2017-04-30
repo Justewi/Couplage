@@ -23,14 +23,14 @@ using std::vector;
 class UnDiGraph : public Graph {
 private:
     // the total number of edges
-    unsigned int _nbEdges;
+    int _nbEdges;
     // the adjacency list
-    vector<vector<unsigned int>> adjacencyList;
+    vector<vector<int>> adjacencyList;
 
 public:
 
     // builds an undirected graph with n vertices
-    UnDiGraph(unsigned int n);
+    UnDiGraph(int n);
     UnDiGraph(const UnDiGraph& orig);
     UnDiGraph(UnDiGraph&& orig);
 
@@ -40,12 +40,12 @@ public:
 
 
     // returns the number of vertices
-    unsigned int nbVertices() const;
+    int nbVertices() const;
     // returns the number of edges
-    unsigned int nbEdges() const;
+    int nbEdges() const;
 
     //returns the list of the vertices adjacent to u
-    vector<unsigned int> adjacents(unsigned int u) const;
+    vector<int> adjacents(int u) const;
 
     // adds the edge e to the graph
     void addEdge(Edge e);
@@ -53,18 +53,18 @@ public:
     void removeEdge(Edge e);
 
     // adds the edge (u,v) to the graph
-    void addEdge(unsigned int u, unsigned int v);
+    void addEdge(int u, int v);
     // removes the edge (u,v) from the graph
-    void removeEdge(unsigned int u, unsigned int v);
+    void removeEdge(int u, int v);
 
     //returns the total degree of u
-    unsigned int degree(unsigned int u) const;
+    int degree(int u) const;
 
     /**
      * Add a new vertex to the graph
      * @return The id of the new vertex
      */
-    unsigned int addVertex();
+    int addVertex();
 
 };
 

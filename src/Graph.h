@@ -1,6 +1,12 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+
+/*
+ * Graph.h
+ * Classe réutilisée du cours d'ADS en SI3
+ * Alexandre BAR, Cyprien LEVY
+ */
 #include "Edge.h"
 
 class Graph {
@@ -10,9 +16,9 @@ public:
     virtual ~Graph();
 
     // returns the number of vertices
-    virtual unsigned int nbVertices() const = 0;
+    virtual int nbVertices() const = 0;
     // returns the number of edges
-    virtual unsigned int nbEdges() const = 0;
+    virtual int nbEdges() const = 0;
 
     // adds the edge e to the graph
     virtual void addEdge(Edge e) = 0;
@@ -20,16 +26,15 @@ public:
     virtual void removeEdge(Edge e) = 0;
 
     // adds the edge (u,v) to the graph
-    virtual void addEdge(unsigned int u, unsigned int v) = 0;
+    virtual void addEdge(int u, int v) = 0;
     // removes the edge (u,v) from the graph
-    virtual void removeEdge(unsigned int u, unsigned int v) = 0;
+    virtual void removeEdge(int u, int v) = 0;
 
     /**
      * Add a new vertex to the graph
      * @return The id of the new vertex
      */
-    virtual unsigned int addVertex() = 0;
+    virtual int addVertex() = 0;
 };
 
 #endif /* GRAPH_H */
-

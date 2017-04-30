@@ -20,7 +20,7 @@ namespace GraphMatching {
     /**
      * Trouve le couplage maximum dans le cas d'un graphe biparti
      */
-    std::vector<Edge> CouplageMaximumBiparti(const UnDiGraph& graphe, unsigned int moitie);
+    std::vector<Edge> CouplageMaximumBiparti(const UnDiGraph& graphe, int moitie);
 
     /**
      * Fonction permettant de dire si un couplage est parfait ou non.

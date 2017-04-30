@@ -1,17 +1,16 @@
 /*
  * Edge.cpp
- *
- *  Created on: 5 mars 2017
- *      Authors: Alexis Metge, Liavona Zheltanosava, Gaspard lacroix
+ * Classe réutilisée du cours d'ADS en SI3
+ * Alexandre BAR, Cyprien LEVY
  */
 
 #include "Edge.h"
 
-unsigned int Edge::origin() const{
+int Edge::origin() const{
     return x;
 }
 
-unsigned int Edge::destination() const{
+int Edge::destination() const{
     return y;
 }
 

@@ -1,10 +1,7 @@
 /*
  * Edge.h
- *
- * This class is the traduction in C++ of the Java Edge classe studied in ADS2 course (Polytech SI3)
- *
- *  Created on: 5 mars 2017
- *      Authors: Alexis Metge, Liavona Zheltanosava, Gaspard lacroix
+ * Classe réutilisée du cours d'ADS en SI3
+ * Alexandre BAR, Cyprien LEVY
  */
 
 #ifndef SRC_EDGE_H_
@@ -14,16 +11,16 @@
 
 class Edge {
 private:
-    unsigned int x;
-    unsigned int y;
+    int x;
+    int y;
 
 public:
 
     Edge(int _x = 0, int _y = 0) : x(_x), y(_y) {
     }
 
-    unsigned int origin() const;
-    unsigned int destination() const;
+    int origin() const;
+    int destination() const;
 
     bool equals(Edge& e);
 
